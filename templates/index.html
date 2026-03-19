@@ -1,0 +1,30 @@
+{% for project in projects %}
+<div class="col-md-4">
+    <div class="card h-100 bg-dark border-secondary text-white">
+        {% if project.image_url %}
+        <img src="{{ project.image_url }}" class="card-img-top" alt="{{ project.title }}">
+        {% endif %}
+        <div class="card-body">
+            <span class="badge bg-primary mb-2">{{ project.category }}</span>
+            <h5 class="card-title">{{ project.title }}</h5>
+            <p class="card-text text-gray small">{{ project.description[:150] }}...</p>
+        </div>
+        <div class="card-footer bg-black border-secondary">
+            <div class="d-flex justify-content-between mb-2 small">
+                <span>Собрано: {{ project.format_money(project.amount_raised) }}</span>
+                <span class="text-gray">Цель: {{ project.format_money(project.goal_amount) }}</span>
+            </div>
+            <div class="progress mb-3" style="height: 8px;">
+                <div class="progress-bar bg-gradient-primary"
+                     role="progressbar"
+                     style="width: {{ project.progress_percent() }}%">
+                </div>
+            </div>
+            <a href="{{ url_for('project_detail', project_id=project.id) }}"
+               class="btn btn-outline-primary w-100 btn-sm">
+                Подробнее
+            </a>
+        </div>
+    </div>
+</div>
+{% endfor %}

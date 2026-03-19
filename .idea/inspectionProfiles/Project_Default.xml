@@ -1,0 +1,21 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="Flask" />
+          <option value="gunicorn" />
+          <option value="Flask-SQLAlchemy" />
+          <option value="SQLAlchemy" />
+          <option value="psycopg2-binary" />
+          <option value="greenlet" />
+          <option value="Werkzeug" />
+          <option value="Jinja2" />
+          <option value="itsdangerous" />
+          <option value="click" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
