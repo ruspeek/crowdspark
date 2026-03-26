@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.title }} — CrowdSpark</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <style>
+        .project-header {
+            padding: 6rem 0 3rem;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        .project-image {
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .project-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #111111 0%, #1a1a1a 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        .support-form {
+            background: linear-gradient(135deg, #111111 0%, #1a1a1a 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .back-link {
+            color: #888;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .back-link:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Навигация -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">CrowdSpark</a>
+        <div class="collapse navbar-collapse justify-content-end">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Назад к проектам</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Заголовок проекта -->
+<section class="project-header">
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back-link">
+            <span>←</span> Все проекты
+        </a>
+        <span class="badge mb-3">{{ project.category }}</span>
+        <h1 class="display-5 fw-bold mb-3">{{ project.title }}</h1>
+        <p class="lead text-gray mb-4">{{ project.description }}</p>
+
+        {% if project.creator_email %}
+        <p class="small text-secondary">Контакты создателя: {{ project.creator_email }}</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Основной контент -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Левая колонка: изображение и описание -->
+            <div class="col-lg-8">
+                {% if project.image_url %}
+                <div class="project-image">
+                    <img src="{{ project.image_url }}" alt="{{ project.title }}">
+                </div>
+                {% endif %}
+
+                {% if project.project_url %}
+                <div class="mb-4">
+                    <a href="{{ project.project_url }}" target="_blank" class="btn btn-outline-primary">
+                        Посетить сайт проекта
+                    </a>
+                </div>
+                {% endif %}
+
+                <h4 class="mb-3">О проекте</h4>
+                <p class="text-gray">{{ project.description }}</p>
+
+                {% if project.backers %}
+                <h4 class="mt-5 mb-3">Поддержавшие проект</h4>
+                <div class="list-group">
+                    {% for backer in project.backers|reverse %}
+                    <div class="list-group-item bg-transparent border-secondary text-white">
+                        <div class="d-flex justify-content-between">
+                            <span>{{ backer.backer_name or 'Аноним' }}</span>
+                            <span class="text-primary">{{ project.format_money(backer.amount) }}</span>
+                        </div>
+                        <small class="text-secondary">{{ backer.created_at.strftime('%d.%m.%Y') }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Правая колонка: статистика и форма поддержки -->
+            <div class="col-lg-4">
+                <div class="stats-card">
+                    <div class="stat-value mb-1">{{ project.format_money(project.amount_raised) }}</div>
+                    <div class="stat-label">собрано из {{ project.format_money(project.goal_amount) }}</div>
+
+                    <div class="progress mt-3" style="height: 8px;">
+                        <div class="progress-bar" style="width: {{ project.progress_percent() }}%"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-2 small text-gray">
+                        <span>{{ project.progress_percent() }}%</span>
+                        <span>{{ project.backers|length }} поддержек</span>
+                    </div>
+                </div>
+
+                <div class="support-form">
+                    <h5 class="mb-3">Поддержать проект</h5>
+                    <form method="POST" action="{{ url_for('support_project', project_id=project.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label text-gray small">Сумма поддержки</label>
+                            <div class="input-group">
+                                <input type="number" name="amount" class="form-control bg-dark text-white border-secondary"
+                                       placeholder="100" min="100" required>
+                                <span class="input-group-text bg-dark border-secondary text-white">{{ project.currency }}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-gray small">Ваше имя</label>
+                            <input type="text" name="name" class="form-control bg-dark text-white border-secondary" placeholder="Необязательно">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-gray small">Email</label>
+                            <input type="email" name="email" class="form-control bg-dark text-white border-secondary" placeholder="Необязательно">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Поддержать</button>
+                    </form>
+                    <small class="text-secondary d-block mt-2">Минимальная сумма: 100 ₽</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Футер -->
+<footer class="text-center py-4">
+    <div class="container">
+        <p class="text-secondary mb-0">© 2024 CrowdSpark. Все права защищены.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

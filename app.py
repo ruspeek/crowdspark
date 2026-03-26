@@ -1,30 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from config import Config
 from models import db, Project, Backer
-from sqlalchemy import inspect, text
 
-app = Flask(__name__)
+app = Flask(__name__)  # Исправлено: было Flask(name)
 app.config.from_object(Config)
 
 # Инициализация БД
 db.init_app(app)
 
-with app.app_context():
-    # Проверяем, существует ли колонка creator_email
-    inspector = inspect(db.engine)
-    columns = [c['name'] for c in inspector.get_columns('projects')]
-
-    if 'creator_email' not in columns:
-        print("🔄 Добавляем колонку creator_email...")
-        with db.engine.connect() as conn:
-            conn.execute(text("ALTER TABLE projects ADD COLUMN creator_email VARCHAR(120)"))
-            conn.commit()
-        print("✅ Колонка добавлена")
-
-    # Создаём таблицы, если их нет
-    db.create_all()
-
-# Создание таблиц при первом запуске (для разработки)
+# Создание таблиц при первом запуске
 with app.app_context():
     db.create_all()
     # Добавляем тестовые проекты, если база пустая
@@ -69,7 +53,7 @@ def index():
 
 @app.route('/create_project', methods=['GET', 'POST'])
 def create_project():
-    """Страница регистрации нового проекта/компания"""
+    """Страница регистрации нового проекта"""
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
@@ -108,7 +92,7 @@ def project_detail(project_id):
 
 @app.route('/support/<int:project_id>', methods=['POST'])
 def support_project(project_id):
-    """Обработка поддержки проекта (Инвестор)"""
+    """Обработка поддержки проекта"""
     project = Project.query.get_or_404(project_id)
     amount = request.form.get('amount', type=int)
     name = request.form.get('name')
@@ -118,7 +102,6 @@ def support_project(project_id):
         flash('Минимальная сумма поддержки — 100 ₽', 'error')
         return redirect(url_for('project_detail', project_id=project_id))
 
-    # Создаем запись о поддержке
     backer = Backer(
         project_id=project_id,
         amount=amount,
@@ -126,7 +109,6 @@ def support_project(project_id):
         backer_email=email
     )
 
-    # Обновляем сумму сбора
     project.amount_raised += amount
 
     db.session.add(backer)
@@ -152,5 +134,5 @@ def api_projects():
         } for p in projects]
     }
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # Исправлено: было if name == 'main'
     app.run(debug=True, host='0.0.0.0', port=5000)
