@@ -11,7 +11,6 @@ db.init_app(app)
 # Создание таблиц при первом запуске (для разработки)
 with app.app_context():
     db.create_all()
-
     # Добавляем тестовые проекты, если база пустая
     if Project.query.count() == 0:
         demo_projects = [
@@ -21,7 +20,8 @@ with app.app_context():
                 category="Стартапы",
                 amount_raised=150000,
                 goal_amount=500000,
-                image_url="https://via.placeholder.com/400x300/1a1a2e/ffffff?text=3D+Tennis+Ball"
+                image_url="https://via.placeholder.com/400x300/1a1a2e/ffffff?text=3D+Tennis+Ball",
+                creator_email="demo@tennis.com"
             ),
             Project(
                 title="Смарт-зеркала",
@@ -29,7 +29,8 @@ with app.app_context():
                 category="Технологии",
                 amount_raised=320000,
                 goal_amount=1000000,
-                image_url="https://via.placeholder.com/400x300/1a1a2e/ffffff?text=Smart+Mirrors"
+                image_url="https://via.placeholder.com/400x300/1a1a2e/ffffff?text=Smart+Mirrors",
+                creator_email="demo@mirrors.com"
             ),
             Project(
                 title="DanceConnect",
@@ -37,12 +38,12 @@ with app.app_context():
                 category="Приложения",
                 amount_raised=50000,
                 goal_amount=300000,
-                image_url="https://via.placeholder.com/400x300/1a1a2e/ffffff?text=DanceConnect"
+                image_url="https://via.placeholder.com/400x300/1a1a2e/ffffff?text=DanceConnect",
+                creator_email="demo@dance.com"
             ),
         ]
         db.session.bulk_save_objects(demo_projects)
         db.session.commit()
-
 
 @app.route('/')
 def index():
@@ -50,6 +51,38 @@ def index():
     projects = Project.query.filter_by(status='active').all()
     return render_template('index.html', projects=projects)
 
+@app.route('/create_project', methods=['GET', 'POST'])
+def create_project():
+    """Страница регистрации нового проекта/компания"""
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        category = request.form.get('category')
+        goal_amount = request.form.get('goal_amount', type=int)
+        image_url = request.form.get('image_url')
+        creator_email = request.form.get('creator_email')
+
+        if not title or not goal_amount or not creator_email:
+            flash('Заполните обязательные поля: Название, Цель сбора и Email', 'error')
+            return redirect(url_for('create_project'))
+
+        new_project = Project(
+            title=title,
+            description=description,
+            category=category,
+            goal_amount=goal_amount,
+            image_url=image_url,
+            creator_email=creator_email,
+            amount_raised=0
+        )
+
+        db.session.add(new_project)
+        db.session.commit()
+
+        flash(f'Проект "{title}" успешно зарегистрирован!', 'success')
+        return redirect(url_for('index'))
+
+    return render_template('create_project.html')
 
 @app.route('/project/<int:project_id>')
 def project_detail(project_id):
@@ -57,12 +90,10 @@ def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
     return render_template('project.html', project=project)
 
-
 @app.route('/support/<int:project_id>', methods=['POST'])
 def support_project(project_id):
-    """Обработка поддержки проекта"""
+    """Обработка поддержки проекта (Инвестор)"""
     project = Project.query.get_or_404(project_id)
-
     amount = request.form.get('amount', type=int)
     name = request.form.get('name')
     email = request.form.get('email')
@@ -88,7 +119,6 @@ def support_project(project_id):
     flash(f'Спасибо за поддержку {project.title}!', 'success')
     return redirect(url_for('project_detail', project_id=project_id))
 
-
 @app.route('/api/projects')
 def api_projects():
     """API endpoint для получения проектов (JSON)"""
@@ -105,7 +135,6 @@ def api_projects():
             'currency': p.currency
         } for p in projects]
     }
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

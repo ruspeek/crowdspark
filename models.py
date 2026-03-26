@@ -6,7 +6,6 @@ db = SQLAlchemy()
 
 class Project(db.Model):
     __tablename__ = 'projects'
-
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -26,6 +25,9 @@ class Project(db.Model):
     image_url = db.Column(db.String(500))
     project_url = db.Column(db.String(500))
 
+    # Контакты создателя (для регистрации компании/проекта)
+    creator_email = db.Column(db.String(120), nullable=True)
+
     def progress_percent(self):
         """Процент сбора средств"""
         if self.goal_amount == 0:
@@ -43,7 +45,6 @@ class Project(db.Model):
 class Backer(db.Model):
     """Таблица для тех, кто поддерживает проекты"""
     __tablename__ = 'backers'
-
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
     amount = db.Column(db.Integer, nullable=False)
