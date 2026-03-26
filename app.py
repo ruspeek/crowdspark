@@ -1,12 +1,28 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from config import Config
 from models import db, Project, Backer
+from sqlalchemy import inspect, text
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 # Инициализация БД
 db.init_app(app)
+
+with app.app_context():
+    # Проверяем, существует ли колонка creator_email
+    inspector = inspect(db.engine)
+    columns = [c['name'] for c in inspector.get_columns('projects')]
+
+    if 'creator_email' not in columns:
+        print("🔄 Добавляем колонку creator_email...")
+        with db.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE projects ADD COLUMN creator_email VARCHAR(120)"))
+            conn.commit()
+        print("✅ Колонка добавлена")
+
+    # Создаём таблицы, если их нет
+    db.create_all()
 
 # Создание таблиц при первом запуске (для разработки)
 with app.app_context():
